@@ -2,6 +2,16 @@
 #include "Adafruit_SGP30.h"
 #include "Adafruit_PM25AQI.h"
 #include <Adafruit_NeoPixel.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+
+// —— WiFi 配置 —— 
+const char* ssid = "vivo50";           // 替换为您的WiFi名称
+const char* password = "bk666666";   // 替换为您的WiFi密码
+
+// —— ThingSpeak 配置 —— 
+const char* thingSpeakURL = "http://api.thingspeak.com/update";
+const char* writeAPIKey = "HWLDOM7OUII2PRSC";  // 替换为您的ThingSpeak Write API Key
 
 // —— 引脚定义 —— 
 const int FAN12_PIN    = 18;
@@ -35,6 +45,10 @@ const uint16_t PM25_LOW  = 35,  PM25_MED  = 75,  PM25_HIGH  = 150;
 unsigned long lastMeasureTime = 0;
 const unsigned long measureInterval = 2000;
 
+// —— ThingSpeak 上传定时 —— 
+unsigned long lastUploadTime = 0;
+const unsigned long uploadInterval = 30000; // 30秒上传一次（ThingSpeak免费账户限制）
+
 // —— 预热设置 —— 
 const unsigned long totalPreheat  = 30000;    // 30s
 const int flashCycles             = 3;
@@ -52,6 +66,10 @@ unsigned long preheatLastTime = 0;
 int flashCount          = 0;
 bool flashOn            = false;
 unsigned long flashLastTime = 0;
+
+// —— 存储最新数据用于上传 —— 
+uint16_t currentTVOC = 0;
+uint16_t currentPM25 = 0;
 
 void setup() {
   Serial.begin(115200);
@@ -90,6 +108,9 @@ void setup() {
   }
   Serial.println("PMS5003 已就绪");
 
+  // WiFi 连接
+  connectWiFi();
+
   Serial.println("请按按钮开机");
 }
 
@@ -108,7 +129,79 @@ void loop() {
       lastMeasureTime = millis();
       measureAndControl();
     }
+    
+    // 检查是否需要上传数据到ThingSpeak
+    if (millis() - lastUploadTime >= uploadInterval) {
+      lastUploadTime = millis();
+      uploadToThingSpeak();
+    }
   }
+  
+  // 检查WiFi连接状态
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi连接丢失，尝试重连...");
+    connectWiFi();
+  }
+}
+
+void connectWiFi() {
+  Serial.print("连接WiFi: ");
+  Serial.println(ssid);
+  
+  WiFi.begin(ssid, password);
+  
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println();
+    Serial.println("WiFi连接成功!");
+    Serial.print("IP地址: ");
+    Serial.println(WiFi.localIP());
+  } else {
+    Serial.println();
+    Serial.println("WiFi连接失败！");
+  }
+}
+
+void uploadToThingSpeak() {
+  if (WiFi.status() != WL_CONNECTED) {
+    Serial.println("WiFi未连接，跳过数据上传");
+    return;
+  }
+
+  HTTPClient http;
+  http.begin(thingSpeakURL);
+  http.addHeader("Content-Type", "application/x-www-form-urlencoded");
+  
+  // 构建POST数据
+  String postData = "api_key=" + String(writeAPIKey) + 
+                   "&field1=" + String(currentTVOC) +       // TVOC (ppb)
+                   "&field2=" + String(currentPM25);       // PM2.5 (µg/m³)
+  
+  Serial.println("上传数据到ThingSpeak...");
+  Serial.println("数据: " + postData);
+  
+  int httpResponseCode = http.POST(postData);
+  
+  if (httpResponseCode > 0) {
+    String response = http.getString();
+    Serial.println("ThingSpeak响应: " + response);
+    
+    if (response.toInt() > 0) {
+      Serial.println("✓ 数据上传成功");
+    } else {
+      Serial.println("✗ 数据上传失败: " + response);
+    }
+  } else {
+    Serial.println("✗ HTTP请求失败，错误代码: " + String(httpResponseCode));
+  }
+  
+  http.end();
 }
 
 void handleButton() {
@@ -183,6 +276,7 @@ void measureAndControl() {
   uint16_t tvoc = UINT16_MAX;
   if (sgp.IAQmeasure()) {
     tvoc = sgp.TVOC;
+    currentTVOC = tvoc;
   } else {
     Serial.println("Error: TVOC 读取失败");
   }
@@ -193,6 +287,7 @@ void measureAndControl() {
   if (aqi.read(&d)) {
     pm25 = d.pm25_standard;
     lastPM25 = pm25;
+    currentPM25 = pm25;
     pm25FailCount = 0;
   } else {
     pm25FailCount++;
