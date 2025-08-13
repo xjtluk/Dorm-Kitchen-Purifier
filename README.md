@@ -49,7 +49,7 @@ A comprehensive IoT-based air purification and monitoring system designed specif
 ## 📦 Installation
 
 ### Hardware Setup
-1. **3D Print Enclosure**: Use provided Fusion 360 files for compact desktop unit
+1. **3D Print Enclosure**: Use provided Fusion 360 files (3D model) for compact desktop unit
 2. **Circuit Assembly**: Follow schematic for sensor and fan connections
 3. **Filter Installation**: Insert HEPA + activated carbon cartridge
 
@@ -61,7 +61,7 @@ Pin Connections:
 ├── NeoPixel LEDs: pins 25/26
 └── Control Button: pin 4
 ```
-<img src="doc/Circuit diagram.png" alt="电路图片" width="600"/>
+<img src="doc/Circuit diagram.png" alt="电路图片" width="500"/>
 
 ### Software Setup
 1. **Install Arduino IDE** with ESP32 board support
