@@ -1,7 +1,7 @@
 # Smart Indoor Air Quality Monitor & Purifier
 
 <img src="doc/machine.jpg" alt="机器图片" width="600"/>
-
+ 
 A comprehensive IoT-based air purification and monitoring system designed specifically for student residences, combining real-time pollution detection, automated purification control, and cloud data logging.
 
 ![System Overview](https://img.shields.io/badge/Platform-ESP32-blue)
@@ -61,6 +61,7 @@ Pin Connections:
 ├── NeoPixel LEDs: pins 25/26
 └── Control Button: pin 4
 ```
+<img src="doc/Circuit diagram.png" alt="电路图片" width="600"/>
 
 ### Software Setup
 1. **Install Arduino IDE** with ESP32 board support
