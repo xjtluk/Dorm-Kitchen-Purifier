@@ -21,10 +21,10 @@ A comprehensive IoT-based air purification and monitoring system designed specif
 ## 📊 Performance Results
 
 ### Purification Effectiveness
-- **PM₂.₅ Reduction**: 20-34% reduction in peak concentrations
-- **TVOC Reduction**: 33-45% reduction during active purification
+- **PM₂.₅ Reduction**: 31% reduction in peak concentrations
+- **TVOC Reduction**: 13% reduction during active purification
 - **Response Time**: System activation within 6 seconds of threshold violation
-- **User Behavior Impact**: 356% improvement in ventilation response rates (18% → 82%)
+
 
 ### System Specifications
 - **Detection Range**: PM₂.₅ (0-1000 µg/m³), TVOC (0-60,000 ppb)
